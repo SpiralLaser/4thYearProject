@@ -1,4 +1,9 @@
 import java.util.List;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -13,6 +18,7 @@ public class AStar {
 	private final int ystart;
 	private int xend, yend;
 	private final boolean diag;
+	private int direction;
 
 	// Node class
 	static class Node implements Comparable {
@@ -44,7 +50,7 @@ public class AStar {
 		this.xstart = xstart;
 		this.ystart = ystart;
 		this.diag = diag;    
-
+		this.direction = 1;		//current direction robot is facing ranging from 1-4. N is 1, E is 2, S is 3, W is 4
 	}
 	/*
 	 ** Finds path to xend/yend or returns null
@@ -124,15 +130,76 @@ public class AStar {
 		Collections.sort(this.open);
 	}
 
+	public static int compare(Node first, Node second) {
+		if (second.y < first.y) {return 1;}
+		else if (second.x > first.x){return 2;}
+		else if (second.y > first.y) {return 3;}
+		else if (second.x < first.x) {return 4;}
+		else {return 0;}
+	}
+	public void changeDirection(int n) {
+		direction = n;
+	}
+	public int getDirection() {
+		return direction;
+	}
+	public static void writeToFile(String text) {
+		try {
+			PrintWriter writer = new PrintWriter("Instructions.txt", "UTF-8");
+			writer.print(text);
+			writer.close();
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public String insert(String bag, String marble, int index) {
+	    String bagBegin = bag.substring(0,index);
+	    String bagEnd = bag.substring(index);
+	    return bagBegin + marble + bagEnd;
+	}
+	
+	public String checkTurn(char c, char d) {
+		int i = Character.getNumericValue(c);
+		
+		int j = Character.getNumericValue(d);
+		
+		if (i==1) {	//facing north
+			if (j==2)
+				return "R";  //turning east
+			else if(j==4)
+				return "L"; //turning west
+		}
+		if (i==2) { //facing east
+			if (j==3)
+				return "R"; //turning south
+			else if(j==1)
+				return "L"; // turning north
+		}
+		if (i==3) { //facing south
+			if (j==4)
+				return "R"; // turning west
+			else if(j==2)
+				return "L"; // turning east
+		}
+		if (i==4) { //facing west
+			if (j==1)
+				return "R"; //turning east
+			else if(j==3)
+				return "L"; // turning west
+		}
+		
+		return "";
+	}
 	public static void main(String[] args) {
 		// -1 = blocked
 		// 0+ = additional movement cost
-		
+
 		FileTo2DArray convert = new FileTo2DArray();
 		int[][] maze = convert.getMap();
-
-		AStar as = new AStar(maze, 0, 0, false);
-		List<Node> path = as.findPathTo(7, 50);
+		int next = 0;
+		AStar as = new AStar(maze, 63, 63, false);
+		List<Node> path = as.findPathTo(40, 50);
 		if (path != null) {
 			path.forEach((n) -> {
 				System.out.print("[" + n.x + ", " + n.y + "] ");
@@ -155,6 +222,35 @@ public class AStar {
 				}
 				System.out.println();
 			}
+			String instructions = "";
+
+			for (int i =0; i<path.size() - 1; i++) {
+				next = compare(path.get(i), path.get(i+1));
+				//if (next != as.getDirection()) {
+				as.changeDirection(next);
+				instructions += next;
+				//}
+			}
+
+			String turn = "";
+			for (int i = 0; i<instructions.length()-1; i++) {
+				if (instructions.charAt(i) != instructions.charAt(i+1)) {
+					turn = as.checkTurn(instructions.charAt(i), instructions.charAt(i+1));
+					instructions = as.insert(instructions, " " + turn + "90 ", i+1);
+					i+=5;
+				}
+			}
+			//check if first instruction needs a turn
+			if (compare(path.get(0), path.get(1)) != 1) {
+				next = compare(path.get(0), path.get(1));
+				as.changeDirection(next);
+				turn = as.checkTurn('1', instructions.charAt(0));
+				instructions = as.insert(instructions, turn + "90 ", 0);
+			}
+			instructions = instructions.replaceAll("4", " F1 ");
+			System.out.print(instructions );
+			writeToFile(instructions);
+
 		}
 	}
 }
