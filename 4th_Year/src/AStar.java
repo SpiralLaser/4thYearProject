@@ -1,8 +1,5 @@
 import java.util.List;
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,6 +18,7 @@ public class AStar {
 	private int direction;
 
 	// Node class
+	@SuppressWarnings("rawtypes")
 	static class Node implements Comparable {
 		public Node parent;
 		public int x, y;
@@ -89,7 +87,7 @@ public class AStar {
 		return array.stream().anyMatch((n) -> (n.x == node.x && n.y == node.y));
 	}
 	/*
-	 ** Calulate distance between this.now and xend/yend
+	 ** Calculate distance between this.now and xend/yend
 	 **
 	 ** @return (int) distance
 	 */
@@ -100,6 +98,7 @@ public class AStar {
 			return Math.abs(this.now.x + dx - this.xend) + Math.abs(this.now.y + dy - this.yend); // else return "Manhattan distance"
 		}
 	}
+	@SuppressWarnings("unchecked")
 	private void addNeigborsToOpenList() {
 		Node node;
 		for (int x = -1; x <= 1; x++) {
@@ -115,14 +114,6 @@ public class AStar {
 						&& !findNeighborInList(this.open, node) && !findNeighborInList(this.closed, node)) { // if not already done
 					node.g = node.parent.g + 1.; // Horizontal/vertical cost = 1.0
 					node.g += maze[this.now.y + y][this.now.x + x]; // add movement cost for this square
-
-					// diagonal cost = sqrt(hor_cost² + vert_cost²)
-					// in this example the cost would be 12.2 instead of 11
-					/*
-                        if (diag && x != 0 && y != 0) {
-                            node.g += .4;	// Diagonal movement cost = 1.4
-                        }
-					 */
 					this.open.add(node);
 				}
 			}
@@ -130,6 +121,12 @@ public class AStar {
 		Collections.sort(this.open);
 	}
 
+	/**
+	 * Compares the first node (current) with the second node (destination) to see which direction to go in
+	 * @param first
+	 * @param second
+	 * @return	The direction that the robot has to go in
+	 */
 	public static int compare(Node first, Node second) {
 		if (second.y < first.y) {return 1;}
 		else if (second.x > first.x){return 2;}
@@ -137,12 +134,27 @@ public class AStar {
 		else if (second.x < first.x) {return 4;}
 		else {return 0;}
 	}
+	
+	/**
+	 * Changes the direction of the robot to be in the new direction n
+	 * @param n
+	 */
 	public void changeDirection(int n) {
 		direction = n;
 	}
+	
+	/**
+	 * Returns the direction the robot is currently facing
+	 * @return
+	 */
 	public int getDirection() {
 		return direction;
 	}
+	
+	/**
+	 * Writes to file the string
+	 * @param text
+	 */
 	public static void writeToFile(String text) {
 		try {
 			PrintWriter writer = new PrintWriter("Instructions.txt", "UTF-8");
@@ -150,15 +162,29 @@ public class AStar {
 			writer.close();
 		} catch(IOException e) {
 			e.printStackTrace();
+			System.out.println("Instructions.txt not found");
 		}
 	}
 	
+	/**
+	 * Inserts a string into another string at index given
+	 * @param bag
+	 * @param marble
+	 * @param index
+	 * @return
+	 */
 	public String insert(String bag, String marble, int index) {
 	    String bagBegin = bag.substring(0,index);
 	    String bagEnd = bag.substring(index);
 	    return bagBegin + marble + bagEnd;
 	}
 	
+	/**
+	 * Given 2 chars (directions), check if they are different, and returns the turn needed.
+	 * @param c
+	 * @param d
+	 * @return
+	 */
 	public String checkTurn(char c, char d) {
 		int i = Character.getNumericValue(c);
 		
@@ -199,7 +225,7 @@ public class AStar {
 		int[][] maze = convert.getMap();
 		int next = 0;
 		AStar as = new AStar(maze, 63, 63, false);
-		List<Node> path = as.findPathTo(40, 50);
+		List<Node> path = as.findPathTo(50, 35);
 		if (path != null) {
 			path.forEach((n) -> {
 				System.out.print("[" + n.x + ", " + n.y + "] ");
@@ -223,7 +249,8 @@ public class AStar {
 				System.out.println();
 			}
 			String instructions = "";
-
+			
+			//Gets next direction in the path and adds it to the instructions
 			for (int i =0; i<path.size() - 1; i++) {
 				next = compare(path.get(i), path.get(i+1));
 				//if (next != as.getDirection()) {
@@ -232,6 +259,7 @@ public class AStar {
 				//}
 			}
 
+			//Checks if a turn is needed at the beginning, then adds it
 			String turn = "";
 			for (int i = 0; i<instructions.length()-1; i++) {
 				if (instructions.charAt(i) != instructions.charAt(i+1)) {
@@ -247,7 +275,13 @@ public class AStar {
 				turn = as.checkTurn('1', instructions.charAt(0));
 				instructions = as.insert(instructions, turn + "90 ", 0);
 			}
+			//replace all directions with Forward 1
+			instructions = instructions.replaceAll("1", " F1 ");
+			instructions = instructions.replaceAll("2", " F1 ");
+			instructions = instructions.replaceAll("3", " F1 ");
 			instructions = instructions.replaceAll("4", " F1 ");
+			
+			//write the instructions to the file
 			System.out.print(instructions );
 			writeToFile(instructions);
 

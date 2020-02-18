@@ -14,6 +14,10 @@ public class FileTo2DArray {
 	int rows, columns;
 	BufferedReader br; 
 	String first;
+	
+	/**
+	 * Reads from Map.txt
+	 */
 	public FileTo2DArray() {
 		int numLines = 0;
 		try {
@@ -49,6 +53,7 @@ public class FileTo2DArray {
 		rows = numLines;
 		map = new int[rows][columns];
 		
+		//iterates through entire file, replaces all . with 0 and all x with 10
 		while(sc.hasNextLine()) {			
 			for (int i=0; i<map.length; i++) {
 				String[] line = sc.nextLine().trim().split("\\s+"); // \\s+ is regex expression for find all whitespaces inbetween
@@ -58,20 +63,26 @@ public class FileTo2DArray {
 					else if (line[j].equals("x")) {						
 						map[i][j] = 10;
 					}
-					//map[i][j] = Integer.parseInt(line[j]);
-					//System.out.print(line[j] + " ");
 				}
-				//System.out.println();           
+      
 			}
 		}
-		//System.out.println(Arrays.deepToString(myArray));
-		//System.out.println(map[1][3]);  
-		//System.out.println(map[1][4]);  
-		//System.out.println(map[1][5]);  
 	}
+	
+	/**
+	 * Returns the map being used
+	 * @return
+	 */
 	public int[][] getMap(){
 		return map;
 	}
+	
+	/**
+	 * Counts the number of lines in the file
+	 * @param filename
+	 * @return
+	 * @throws IOException
+	 */
 	public int countLines(String filename) throws IOException {
 		InputStream is = new BufferedInputStream(new FileInputStream(filename));
 		try {
@@ -94,6 +105,12 @@ public class FileTo2DArray {
 			is.close();
 		}
 	}
+	
+	/**
+	 * Count number of horizontal lines (width dimension)
+	 * @param s
+	 * @return
+	 */
 	public int countLine(String s) {
 		int count = 0;
 		for (int i=0; i<s.length(); i++) {
@@ -104,7 +121,5 @@ public class FileTo2DArray {
 		
 		return count;
 	}
-	public static void main(String args[]) throws Exception {
-		FileTo2DArray convert = new FileTo2DArray();
-	}
+
 }
