@@ -11,8 +11,8 @@ public class AStar {
 	private final List<Node> path;
 	private int[][] maze;
 	private Node now;
-	private final int xstart;
-	private final int ystart;
+	private int xstart;
+	private int ystart;
 	private int xend, yend;
 	private final boolean diag;
 	private int direction;
@@ -134,7 +134,7 @@ public class AStar {
 		else if (second.x < first.x) {return 4;}
 		else {return 0;}
 	}
-	
+
 	/**
 	 * Changes the direction of the robot to be in the new direction n
 	 * @param n
@@ -142,7 +142,7 @@ public class AStar {
 	public void changeDirection(int n) {
 		direction = n;
 	}
-	
+
 	/**
 	 * Returns the direction the robot is currently facing
 	 * @return
@@ -150,7 +150,7 @@ public class AStar {
 	public int getDirection() {
 		return direction;
 	}
-	
+
 	/**
 	 * Writes to file the string
 	 * @param text
@@ -165,7 +165,7 @@ public class AStar {
 			System.out.println("Instructions.txt not found");
 		}
 	}
-	
+
 	/**
 	 * Inserts a string into another string at index given
 	 * @param bag
@@ -174,11 +174,11 @@ public class AStar {
 	 * @return
 	 */
 	public String insert(String bag, String marble, int index) {
-	    String bagBegin = bag.substring(0,index);
-	    String bagEnd = bag.substring(index);
-	    return bagBegin + marble + bagEnd;
+		String bagBegin = bag.substring(0,index);
+		String bagEnd = bag.substring(index);
+		return bagBegin + marble + bagEnd;
 	}
-	
+
 	/**
 	 * Given 2 chars (directions), check if they are different, and returns the turn needed.
 	 * @param c
@@ -187,9 +187,9 @@ public class AStar {
 	 */
 	public String checkTurn(char c, char d) {
 		int i = Character.getNumericValue(c);
-		
+
 		int j = Character.getNumericValue(d);
-		
+
 		if (i==1) {	//facing north
 			if (j==2)
 				return "R";  //turning east
@@ -214,25 +214,58 @@ public class AStar {
 			else if(j==3)
 				return "L"; // turning west
 		}
-		
+
 		return "";
+	}
+	
+	/**
+	 * Replaces all 1, 2, 3, and 4s in the text with F1
+	 * @param text
+	 * @return
+	 */
+	public String replace(String text) {
+		text = text.replaceAll("1", " F1 ");
+		text = text.replaceAll("2", " F1 ");
+		text = text.replaceAll("3", " F1 ");
+		text = text.replaceAll("4", " F1 ");
+		return text;
 	}
 	public static void main(String[] args) {
 		// -1 = blocked
 		// 0+ = additional movement cost
 
+		 if(args.length == 0)
+		    {
+		        System.out.println("Proper Usage is: Java AStar int int");
+		        System.exit(0);
+		    }
+		//initializing variables to input parameters
+		int xstart = Integer.parseInt(args[0]);
+		int ystart = Integer.parseInt(args[1]);
+		int first =  Integer.parseInt(args[2]);
+		int second = Integer.parseInt(args[3]);
+		//add more variable assignments from args
+		
 		FileTo2DArray convert = new FileTo2DArray();
 		int[][] maze = convert.getMap();
 		int next = 0;
-		AStar as = new AStar(maze, 63, 63, false);
-		List<Node> path = as.findPathTo(50, 35);
+		AStar as = new AStar(maze, xstart, ystart, false);
+		List<Node> path = as.findPathTo(first, second);	//travel from start location to object pickup location
+		//List<Node> deliver = as.findPathTo(30, 30);
+		
 		if (path != null) {
+			
+//			Prints the entire path in coordinates
 			path.forEach((n) -> {
 				System.out.print("[" + n.x + ", " + n.y + "] ");
 				maze[n.y][n.x] = -1;
-			});
+			}
+			);
+	
+//			Prints the total cost of the path
 			System.out.printf("\nTotal cost: %.02f\n", path.get(path.size() - 1).g);
 
+//			Prints the entire map visually
 			for (int[] maze_row : maze) {
 				for (int maze_entry : maze_row) {
 					switch (maze_entry) {
@@ -249,7 +282,7 @@ public class AStar {
 				System.out.println();
 			}
 			String instructions = "";
-			
+
 			//Gets next direction in the path and adds it to the instructions
 			for (int i =0; i<path.size() - 1; i++) {
 				next = compare(path.get(i), path.get(i+1));
@@ -276,14 +309,14 @@ public class AStar {
 				instructions = as.insert(instructions, turn + "90 ", 0);
 			}
 			//replace all directions with Forward 1
-			instructions = instructions.replaceAll("1", " F1 ");
-			instructions = instructions.replaceAll("2", " F1 ");
-			instructions = instructions.replaceAll("3", " F1 ");
-			instructions = instructions.replaceAll("4", " F1 ");
+			instructions = as.replace(instructions);
+			
+			//add an instruction that turns the robot to face North (0) at end of each run 
 			
 			//write the instructions to the file
-			System.out.print(instructions );
+			System.out.print(instructions);
 			writeToFile(instructions);
+			
 
 		}
 	}
